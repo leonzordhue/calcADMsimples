@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0B4A44" />
+<title>LAADV Triagem de Viabilidade</title>
+<meta name="description" content="Envie os contracheques e a data de posse: a LAADV avalia se há progressão atrasada e quais documentos faltam para fechar a ação." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --teal:#0B4A44; --teal-mid:#145E58; --teal-light:#1C7A72; --teal-bg:#EBF5F4; --teal-brd:#A8D4D0;
+    --gold:#C9A93E; --gold-light:#E8CB6E; --gold-bg:#FBF5E0;
+    --bg:#F5F7F9; --card:#FFFFFF; --line:#DDE3EC; --muted:#5B6B7C; --text:#162030; --text-mid:#3D4F63;
+    --ok:#1A6B48; --ok-bg:#E8F5EE; --ok-brd:#9FD3B7;
+    --warn:#8A6100; --warn-bg:#FFF6DC; --warn-brd:#EBCB7A;
+    --bad:#8C1A1A; --bad-bg:#F8EBEB; --bad-brd:#D4A8A8;
+    --serif:'Cormorant Garamond', Georgia, serif; --font:'DM Sans', system-ui, sans-serif;
+    --r:14px; --shadow:0 2px 18px rgba(11,74,68,.10), 0 0 0 1px var(--line);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+  header { background:var(--teal); border-bottom:3px solid var(--gold); color:#fff; padding:14px 16px; position:sticky; top:0; z-index:10; }
+  .hwrap { max-width:980px; margin:0 auto; display:flex; align-items:center; gap:12px; }
+  .logo { width:40px; height:40px; border-radius:9px; background:var(--gold); color:var(--teal); font-family:var(--serif); font-weight:700; font-size:20px; display:grid; place-items:center; flex-shrink:0; }
+  .htit { font-family:var(--serif); font-size:22px; font-weight:700; line-height:1.1; }
+  .hsub { font-size:12px; color:var(--gold-light); letter-spacing:.04em; }
+  .priv { margin-left:auto; font-size:11px; color:#d5ebe8; text-align:right; max-width:230px; }
+  main { max-width:980px; margin:0 auto; padding:18px 16px 60px; }
+  .steps { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .step { flex:1; min-width:150px; background:var(--card); border-radius:999px; padding:8px 14px; font-size:13px; color:var(--muted); box-shadow:var(--shadow); display:flex; align-items:center; gap:8px; }
+  .step b { width:24px; height:24px; border-radius:50%; background:var(--line); color:var(--text-mid); display:grid; place-items:center; font-size:12px; flex-shrink:0; }
+  .step.on { color:var(--teal); font-weight:600; } .step.on b { background:var(--teal); color:#fff; }
+  .step.done b { background:var(--ok); color:#fff; }
+  .card { background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); padding:20px; margin-bottom:16px; }
+  h2 { font-family:var(--serif); font-size:24px; margin:0 0 4px; color:var(--teal); }
+  .lead { color:var(--text-mid); margin:0 0 14px; font-size:14px; }
+  .drop { border:2px dashed var(--teal-brd); background:var(--teal-bg); border-radius:var(--r); padding:28px 16px; text-align:center; cursor:pointer; transition:.15s; }
+  .drop:hover, .drop.over { border-color:var(--teal); background:#dff0ee; }
+  .drop .big { font-size:17px; font-weight:600; color:var(--teal); }
+  .drop .small { font-size:13px; color:var(--muted); margin-top:4px; }
+  .btn { font-family:var(--font); border:0; border-radius:10px; padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-p { background:var(--teal); color:#fff; } .btn-p:hover { background:var(--teal-mid); }
+  .btn-g { background:var(--gold); color:var(--teal); } .btn-g:hover { background:var(--gold-light); }
+  .btn-l { background:var(--card); color:var(--teal); box-shadow:0 0 0 1px var(--teal-brd); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .files { margin-top:14px; display:grid; gap:8px; }
+  .file { display:grid; grid-template-columns:34px 1fr auto; gap:10px; align-items:center; border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:#fff; }
+  .ficon { width:34px; height:34px; border-radius:8px; background:var(--teal-bg); display:grid; place-items:center; font-size:17px; }
+  .fname { font-weight:600; font-size:14px; word-break:break-all; }
+  .fmeta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .fright { display:flex; gap:6px; align-items:center; }
+  select, input[type=date], input[type=text] { font-family:var(--font); font-size:14px; padding:9px 10px; border-radius:9px; border:1px solid var(--line); background:#fff; color:var(--text); min-width:0; }
+  select:focus, input:focus { outline:2px solid var(--teal-light); outline-offset:1px; }
+  .x { background:none; border:0; color:var(--muted); font-size:18px; cursor:pointer; padding:2px 6px; }
+  .bar { height:5px; border-radius:3px; background:var(--line); overflow:hidden; margin-top:6px; }
+  .bar i { display:block; height:100%; background:var(--teal-light); width:0; transition:width .3s; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+  label.f { display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:600; color:var(--text-mid); }
+  label.f small { font-weight:400; color:var(--muted); }
+  .src { font-size:11px; font-weight:500; color:var(--teal-light); }
+  .src.manual { color:var(--warn); }
+  .verdict { border-radius:var(--r); padding:20px; border:2px solid; margin-bottom:16px; }
+  .verdict.ok { background:var(--ok-bg); border-color:var(--ok-brd); }
+  .verdict.warn { background:var(--warn-bg); border-color:var(--warn-brd); }
+  .verdict.bad { background:var(--bad-bg); border-color:var(--bad-brd); }
+  .vtag { display:inline-block; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:4px 10px; border-radius:999px; color:#fff; }
+  .ok .vtag { background:var(--ok); } .warn .vtag { background:var(--warn); } .bad .vtag { background:var(--bad); }
+  .vtit { font-family:var(--serif); font-size:28px; font-weight:700; margin:8px 0 6px; line-height:1.15; }
+  .vtxt { font-size:15px; line-height:1.55; color:var(--text); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:14px; }
+  .kpi { background:rgba(255,255,255,.75); border-radius:10px; padding:10px 12px; }
+  .kpi span { display:block; font-size:12px; color:var(--muted); }
+  .kpi b { font-size:19px; color:var(--teal); }
+  .checklist { display:grid; gap:8px; }
+  .ck { display:grid; grid-template-columns:30px 1fr auto; gap:10px; align-items:center; padding:10px 12px; border-radius:10px; border:1px solid var(--line); }
+  .ck.have { background:var(--ok-bg); border-color:var(--ok-brd); }
+  .ck.miss { background:#fff; }
+  .ck .st { font-size:18px; text-align:center; }
+  .ck .t { font-weight:600; font-size:14px; } .ck .d { font-size:12px; color:var(--muted); margin-top:2px; }
+  .ck .must { font-size:11px; font-weight:700; color:var(--bad); text-transform:uppercase; }
+  .ck .opt { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; }
+  .tl { position:relative; margin:6px 0 0 8px; padding-left:18px; border-left:2px solid var(--teal-brd); }
+  .tl div { position:relative; margin:0 0 10px; font-size:14px; }
+  .tl div::before { content:""; position:absolute; left:-25px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--teal); border:2px solid #fff; box-shadow:0 0 0 1px var(--teal-brd); }
+  .tl div.late::before { background:var(--bad); } .tl div.fut::before { background:var(--gold); }
+  .tl small { color:var(--muted); }
+  .note { font-size:12px; color:var(--muted); line-height:1.5; }
+  .pill { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--teal-bg); color:var(--teal); }
+  .pill.w { background:var(--warn-bg); color:var(--warn); } .pill.b { background:var(--bad-bg); color:var(--bad); }
+  .hide { display:none !important; }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--teal); color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; box-shadow:0 8px 30px rgba(0,0,0,.2); opacity:0; transition:.25s; pointer-events:none; }
+  .toast.on { opacity:1; }
+  details summary { cursor:pointer; color:var(--teal); font-weight:600; font-size:13px; }
+  pre.raw { white-space:pre-wrap; font-size:11px; background:var(--bg); padding:10px; border-radius:8px; max-height:240px; overflow:auto; }
+  footer { text-align:center; font-size:12px; color:var(--muted); padding:20px 16px; }
+  @media (max-width:600px) { .priv { display:none; } .steps { flex-wrap:nowrap; gap:6px; } .step { min-width:0; padding:6px 8px; font-size:11px; gap:5px; line-height:1.15; } .step b { width:20px; height:20px; font-size:11px; } .file { grid-template-columns:30px 1fr; } .fright { grid-column:1 / -1; } .vtit { font-size:23px; } }
+  @media print { header, .steps, .noprint, footer { display:none !important; } body { background:#fff; } .card, .verdict { box-shadow:none; break-inside:avoid; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="logo">L</div>
+    <div>
+      <div class="htit">Triagem de Viabilidade</div>
+      <div class="hsub">LAADV · Progressão funcional de servidores · AM / Manaus</div>
+    </div>
+    <div class="priv">🔒 Os documentos são lidos aqui no seu navegador. Nada é enviado para a internet.</div>
+  </div>
+</header>
+
+<main>
+  <div class="steps">
+    <div class="step on" id="s1"><b>1</b> Documentos do cliente</div>
+    <div class="step" id="s2"><b>2</b> Conferir dados</div>
+    <div class="step" id="s3"><b>3</b> Resultado</div>
+  </div>
+
+  <!-- PASSO 1 -->
+  <section class="card" id="p1">
+    <h2>1. Documentos que o cliente mandou</h2>
+    <p class="lead">Arraste aqui os <b>3 últimos contracheques</b> e o que mais o cliente enviou (RG, comprovante de residência, termo de posse…). Aceita PDF e foto do celular.</p>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivos">
+      <div class="big">📄 Arraste os arquivos ou clique para escolher</div>
+      <div class="small">PDF, JPG ou PNG · foto ou escaneado também funciona (leitura automática do texto)</div>
+      <input type="file" id="inp" multiple accept=".pdf,image/*" class="hide" />
+    </div>
+    <div class="files" id="files"></div>
+    <div class="row" style="margin-top:14px;justify-content:space-between">
+      <span class="note" id="readState">Nenhum arquivo ainda. Sem contracheque, dá para preencher os dados à mão no passo 2.</span>
+      <button class="btn btn-p" id="go2">Continuar →</button>
+    </div>
+  </section>
+
+  <!-- PASSO 2 -->
+  <section class="card hide" id="p2">
+    <h2>2. Confira os dados</h2>
+    <p class="lead">Os campos vieram dos contracheques. <b>Confira e corrija</b> o que estiver errado: o resultado depende deles.</p>
+    <div class="grid2">
+      <label class="f">Nome do cliente <input type="text" id="fNome" autocomplete="off" /><span class="src" id="srcNome"></span></label>
+      <label class="f">Órgão / carreira
+        <select id="fCarreira"></select>
+        <span class="src" id="srcCarreira"></span>
+      </label>
+      <label class="f">Data de posse <small>(início do exercício no cargo)</small>
+        <input type="date" id="fPosse" />
+        <span class="src" id="srcPosse"></span>
+      </label>
+      <label class="f"><span id="lblRef">Referência atual no contracheque</span>
+        <select id="fRef"></select>
+        <span class="src" id="srcRef"></span>
+      </label>
+      <label class="f">Referência de ingresso <small>(em que entrou; padrão = a primeira)</small>
+        <select id="fRefIni"></select>
+      </label>
+      <label class="f">Mês do contracheque mais recente
+        <input type="text" id="fComp" placeholder="ex.: 09/2026" />
+        <span class="src" id="srcComp"></span>
+      </label>
+    </div>
+    <div class="row" style="margin-top:16px;justify-content:space-between">
+      <button class="btn btn-l" id="back1">← Voltar</button>
+      <button class="btn btn-g" id="go3">Avaliar viabilidade →</button>
+    </div>
+  </section>
+
+  <!-- PASSO 3 -->
+  <section class="hide" id="p3">
+    <div class="verdict" id="verdict"></div>
+
+    <div class="card" id="cardTl">
+      <h2>Como chegamos nisso</h2>
+      <div id="explica" class="vtxt"></div>
+      <div class="tl" id="timeline" style="margin-top:12px"></div>
+      <p class="note" id="fund"></p>
+    </div>
+
+    <div class="card">
+      <h2>Documentos para fechar a ação</h2>
+      <p class="lead" id="docResumo"></p>
+      <div class="checklist" id="checklist"></div>
+      <div class="row noprint" style="margin-top:14px">
+        <button class="btn btn-g" id="btnZap">📱 Copiar mensagem para o cliente</button>
+        <button class="btn btn-l" id="btnResumo">📋 Copiar resumo interno</button>
+        <button class="btn btn-l" id="btnPrint">🖨️ Imprimir / PDF</button>
+      </div>
+    </div>
+
+    <div class="card noprint">
+      <h2>Próximo passo</h2>
+      <p class="lead">Se for viável e os documentos estiverem completos, faça o cálculo exato dos valores na calculadora completa.</p>
+      <div class="row">
+        <a class="btn btn-p" href="https://leonzordhue.github.io/calculo-administrativo/" target="_blank" rel="noopener" style="text-decoration:none">Abrir a calculadora completa ↗</a>
+        <button class="btn btn-l" id="back2">← Ajustar dados</button>
+        <button class="btn btn-l" id="novo">Nova triagem</button>
+      </div>
+      <details style="margin-top:14px"><summary>Ver texto lido dos documentos (conferência)</summary><pre class="raw" id="raw"></pre></details>
+    </div>
+  </section>
+</main>
+<footer>LAADV · Luís Albert Advocacia · triagem preliminar: não substitui o cálculo completo nem a análise do advogado.</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═════════════════════════════════════════════════════════════════════════════
+   LAADV Triagem de Viabilidade (calcADMsimples), metodologia AKE UFT-1.0
+   FETCH (documentos) → DECODE (pdf.js / OCR + extração) → EXECUTE (motor de
+   progressão) → WRITEBACK (veredito + checklist + mensagem).
+   Regras de carreira copiadas do motor estável leonzordhue/calculo-administrativo
+   (index.html, REGRAS / calcularProgressoesEduc / gerarDemonstrativoSES).
+   ═════════════════════════════════════════════════════════════════════════════ */
+window._VERSION_LOG = [
+  { v: '1.0.0', data: '2026-10-14', autor: 'Proton', desc: 'Primeira versão: leitura de PDF/foto (pdf.js + Tesseract.js por), extração do contracheque, motor de progressão por carreira, veredito e checklist de documentos.' },
+];
+window._VICIOS_CONHECIDOS = [
+  { id: 'V01', desc: 'Datas em fuso local: sempre new Date(a, m, d), nunca string ISO sem hora (vira o dia anterior em UTC-4).' },
+  { id: 'V02', desc: 'Layout dos contracheques varia por órgão: toda extração é sugestão e passa pela conferência do passo 2.' },
+];
+window._TENTATIVAS_FALHAS = [];
+
+const CDN = {
+  pdfjs: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs',
+  pdfjsWorker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs',
+  tesseract: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+};
+
+/* ── CARREIRAS (_meta: fonte normativa de cada regra) ─────────────────────── */
+const CARREIRAS = {
+  SEDUC: {
+    nome: 'SEDUC/AM: Magistério estadual (professor)', rotuloRef: 'Referência', refs: ['A','B','C','D','E','F','G','H'],
+    regra: 'marco2019', antigo: 48, novo: 36, marco: [2019, 2, 1],
+    _meta: { lei: 'Lei n.º 3.951/2013 (PCCR Magistério, interstício 48 meses) e Lei n.º 4.836/2019 (36 meses a partir de 01/03/2019)' },
+  },
+  SEDUC_APOIO: {
+    nome: 'SEDUC/AM: Apoio pedagógico (superior ou fundamental)', rotuloRef: 'Referência', refs: ['A','B','C','D','E'],
+    regra: 'marco2019', antigo: 48, novo: 36, marco: [2019, 2, 1],
+    _meta: { lei: 'Lei n.º 3.951/2013, Anexos IV/V, e Lei n.º 4.836/2019' },
+  },
+  SEDUC_ADMIN: {
+    nome: 'SEDUC/AM: Administrativo', rotuloRef: 'Referência', refs: ['A','B','C','D','E','F','G','H'],
+    regra: 'fixo', meses: 24, _meta: { lei: 'Lei n.º 4.058/2014 (PCCR Administrativo SEDUC), interstício bienal' },
+  },
+  SEMED: {
+    nome: 'SEMED Manaus: Magistério municipal', rotuloRef: 'Referência (letra)', refs: ['A','B','C','D','E','F','G'],
+    regra: 'fixo', meses: 36, _meta: { lei: 'Lei n.º 1.126/2007, art. 49 (progressão de referência a cada 3 anos)' },
+  },
+  SEMED_ADMIN: {
+    nome: 'SEMED Manaus: Administrativo da educação', rotuloRef: 'Padrão', refs: ['1','2','3','4','5','6','7','8','9','10','11','12','13'],
+    regra: 'fixo', meses: 36, _meta: { lei: 'Lei n.º 1.624/2011 (PCCR Administrativo da Educação), padrão a cada 36 meses' },
+  },
+  SES: {
+    nome: 'SES/AM (SUSAM): Saúde estadual', rotuloRef: 'Classe/referência', refs: ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4','D1','D2','D3','D4'],
+    refsAlt: ['E1','E2','E3','E4','F1','F2','F3','F4','G1','G2','G3','G4','H1','H2','H3','H4'],
+    regra: 'breakpoints', bps: [36, 60, 84, 108, 132, 156, 180, 204, 228, 252, 276, 300, 324, 348, 372],
+    _meta: { lei: 'Lei n.º 3.469/2009: 1ª progressão aos 36 meses, depois a cada 24 meses' },
+  },
+  SEMSA: {
+    nome: 'SEMSA Manaus: Saúde municipal', rotuloRef: 'Padrão', refs: ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18'],
+    regra: 'fixo', meses: 24, _meta: { lei: 'Lei n.º 1.222/2008, art. 32 §2 (progressão de padrão a cada 2 anos)' },
+  },
+  PMAM: {
+    nome: 'PMAM: Polícia Militar', rotuloRef: 'Posto/graduação', refs: ['Aluno','Soldado 2ª','Soldado 1ª','Cabo','3º Sargento','2º Sargento','1º Sargento','Subtenente'],
+    refsAlt: ['Aspirante','2º Tenente','1º Tenente','Capitão','Major','Tenente-Coronel','Coronel'],
+    regra: 'fixo', meses: 36, indicativo: true,
+    _meta: { lei: 'Lei n.º 3.725/2012: interstício mínimo de 3 anos; promoção depende de requisitos além do tempo' },
+  },
+  PCAM: {
+    nome: 'PCAM: Polícia Civil', rotuloRef: 'Classe', refs: ['4ª classe','3ª classe','2ª classe','1ª classe','Classe especial'],
+    regra: 'fixo', meses: 36, indicativo: true,
+    _meta: { lei: 'Lei n.º 2.875/2004 e Lei n.º 4.059/2014: promoção por classe, interstício de 3 anos' },
+  },
+};
+
+/* ── DOCUMENTOS para fechar a ação (lista padrão: validar com o escritório) ─ */
+const DOCS = [
+  { id: 'contracheque', nome: 'Últimos 3 contracheques', desc: 'Mostram a referência atual e o salário pago.', obrig: true, min: 3,
+    kw: /contra[\s-]?cheque|demonstrativo de pagamento|demonstrativo de rendimentos|recibo de pagamento|total de vencimentos|total de descontos|l[ií]quido a receber|valor l[ií]quido|proventos/i },
+  { id: 'posse', nome: 'Comprovante da data de posse', desc: 'Termo de posse, ato de nomeação no Diário Oficial ou declaração do RH.', obrig: true,
+    kw: /termo de posse|tomou posse|toma posse|ato de nomea[cç][aã]o|nomear|nomeia|portaria de nomea|declara[cç][aã]o funcional|tempo de servi[cç]o|di[aá]rio oficial/i },
+  { id: 'identidade', nome: 'Documento de identidade com CPF', desc: 'RG, CNH ou outro documento oficial com foto.', obrig: true,
+    kw: /registro geral|carteira de identidade|carteira nacional de habilita|habilita[cç][aã]o|documento de identidade|secretaria de seguran[cç]a p[uú]blica.*identifica|instituto de identifica/i },
+  { id: 'residencia', nome: 'Comprovante de residência', desc: 'Conta de luz, água, telefone ou internet dos últimos 3 meses.', obrig: true,
+    kw: /amazonas energia|[aá]guas de manaus|conta de (luz|[aá]gua|energia)|fatura|comprovante de resid|consumo (de energia|kwh)|kwh/i },
+  { id: 'procuracao', nome: 'Procuração assinada', desc: 'Para o escritório representar o cliente.', obrig: true,
+    kw: /procura[cç][aã]o|outorgante|outorgado|poderes da cl[aá]usula/i },
+  { id: 'contrato', nome: 'Contrato de honorários assinado', desc: 'Contrato de prestação de serviços advocatícios.', obrig: true,
+    kw: /contrato de (presta[cç][aã]o de servi[cç]os advocat|honor[aá]rios)|honor[aá]rios advocat/i },
+  { id: 'fichafin', nome: 'Ficha financeira dos últimos 5 anos', desc: 'Histórico de pagamentos: base do cálculo do retroativo. Pode ser pedida ao RH depois.', obrig: false,
+    kw: /ficha financeira|hist[oó]rico (de pagamentos|financeiro)/i },
+  { id: 'hipossuf', nome: 'Declaração de hipossuficiência', desc: 'Só se for pedir justiça gratuita.', obrig: false,
+    kw: /hipossufici[eê]ncia|justi[cç]a gratuita|n[aã]o possui condi[cç][oõ]es de arcar/i },
+];
+
+/* ── utilidades ───────────────────────────────────────────────────────────── */
+const $ = (id) => document.getElementById(id);
+const MESES = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const MESES_LONGOS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const addMonths = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+const mes1 = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+const diffMonths = (a, b) => (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+const fmtMes = (d) => `${MESES_LONGOS[d.getMonth()]}/${d.getFullYear()}`;
+const fmtData = (d) => d.toLocaleDateString('pt-BR');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2200); }
+function parseBRDate(s) {
+  const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(s || ''); if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return (d.getMonth() === +m[2] - 1 && +m[3] > 1950 && +m[3] < 2100) ? d : null;
+}
+
+/* ── FETCH/DECODE: leitura de PDF (pdf.js) e imagem (Tesseract.js) ─────────── */
+let _pdfjs = null, _tess = null;
+async function pdfjs() {
+  if (!_pdfjs) { _pdfjs = await import(CDN.pdfjs); _pdfjs.GlobalWorkerOptions.workerSrc = CDN.pdfjsWorker; }
+  return _pdfjs;
+}
+function carregarScript(src) {
+  return new Promise((ok, err) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => err(new Error('falha ao carregar ' + src)); document.head.appendChild(s); });
+}
+async function ocrWorker(onProg) {
+  if (!_tess) {
+    if (!window.Tesseract) await carregarScript(CDN.tesseract);
+    _tess = await Tesseract.createWorker('por', 1, { logger: (m) => { if (m.status === 'recognizing text' && _tess && _tess._onProg) _tess._onProg(m.progress); } });
+  }
+  _tess._onProg = onProg;
+  return _tess;
+}
+async function ocrImagem(src, onProg) {
+  const w = await ocrWorker(onProg);
+  const { data } = await w.recognize(src);
+  return data.text || '';
+}
+// Agrupa os itens de texto do pdf.js em linhas (mesma altura y) para os rótulos ficarem ao lado dos valores.
+function linhasDoPdf(items) {
+  const rows = [];
+  for (const it of items) {
+    if (!it.str || !it.str.trim()) continue;
+    const y = it.transform[5], x = it.transform[4];
+    let r = rows.find((q) => Math.abs(q.y - y) < 3);
+    if (!r) { r = { y, parts: [] }; rows.push(r); }
+    r.parts.push({ x, s: it.str });
+  }
+  rows.sort((a, b) => b.y - a.y);
+  return rows.map((r) => r.parts.sort((a, b) => a.x - b.x).map((p) => p.s).join('  ')).join('\n');
+}
+async function lerArquivo(file, onProg) {
+  const ehPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  if (!ehPdf) { onProg(0.05, 'lendo a imagem (OCR)…'); return { texto: await ocrImagem(file, (p) => onProg(p, 'lendo a imagem (OCR)…')), metodo: 'OCR da imagem' }; }
+  const lib = await pdfjs();
+  const pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const paginas = Math.min(pdf.numPages, 12);
+  let texto = '', ocr = 0;
+  for (let i = 1; i <= paginas; i++) {
+    onProg((i - 1) / paginas, `página ${i} de ${paginas}`);
+    const page = await pdf.getPage(i);
+    let t = linhasDoPdf((await page.getTextContent()).items);
+    if (t.replace(/\s/g, '').length < 40) {          // página escaneada: sem camada de texto
+      const vp = page.getViewport({ scale: 2.2 });
+      const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      t = await ocrImagem(cv, (p) => onProg((i - 1 + p) / paginas, `página ${i}: lendo imagem (OCR)…`));
+      ocr++;
+    }
+    texto += `\n=== página ${i} ===\n` + t;
+  }
+  return { texto, metodo: ocr ? `PDF escaneado (${ocr} pág. por OCR)` : 'PDF com texto' };
+}
+
+/* ── DECODE: classificação e extração do contracheque ─────────────────────── */
+function classificar(texto) {
+  const n = texto.slice(0, 6000);
+  const pont = DOCS.map((d) => ({ id: d.id, n: (n.match(new RegExp(d.kw.source, 'gi')) || []).length })).sort((a, b) => b.n - a.n);
+  return pont[0].n > 0 ? pont[0].id : 'outro';
+}
+function detectarCarreira(t) {
+  const u = norm(t);
+  const prof = /PROFESSOR|PEDAGOG|MAGISTERIO|DOCENTE/.test(u);
+  if (/POLICIA MILITAR|PMAM\b|SOLDADO|CABO PM|SARGENTO|SUBTENENTE|TENENTE|CORONEL/.test(u)) return 'PMAM';
+  if (/POLICIA CIVIL|PCAM\b|DELEGAD|INVESTIGADOR|ESCRIVAO|PERITO/.test(u)) return 'PCAM';
+  if (/SEMSA|SECRETARIA MUNICIPAL DE SAUDE/.test(u)) return 'SEMSA';
+  if (/SEMED|SECRETARIA MUNICIPAL DE EDUCACAO/.test(u)) return prof ? 'SEMED' : 'SEMED_ADMIN';
+  if (/SUSAM|\bSES\b|SECRETARIA DE ESTADO DE SAUDE/.test(u)) return 'SES';
+  if (/SEDUC|SECRETARIA DE ESTADO DE EDUCACAO/.test(u)) return prof ? 'SEDUC' : 'SEDUC_ADMIN';
+  if (/PREFEITURA DE MANAUS|MUNICIPIO DE MANAUS/.test(u)) return prof ? 'SEMED' : '';
+  return prof ? 'SEDUC' : '';
+}
+function extrairCompetencia(t) {
+  const u = norm(t);
+  let m = /(?:COMPETENCIA|MES\/ANO|MES DE REFERENCIA|REFERENCIA|PERIODO|FOLHA)[^\n]{0,25}?\b(0[1-9]|1[0-2])\s*[\/\-.]\s*(20\d{2})\b/.exec(u);
+  if (m) return { a: +m[2], m: +m[1] - 1 };
+  m = new RegExp(`\\b(${MESES.join('|')})[A-Z]*\\s*(?:\\/|-|DE)?\\s*(20\\d{2})\\b`).exec(u);
+  if (m) return { a: +m[2], m: MESES.indexOf(m[1]) };
+  m = /\b(0[1-9]|1[0-2])\/(20\d{2})\b/.exec(u);
+  return m ? { a: +m[2], m: +m[1] - 1 } : null;
+}
+function extrairRef(t, carreira) {
+  const u = norm(t);
+  const cfg = CARREIRAS[carreira];
+  const pegar = (re) => { const m = re.exec(u); return m ? m[1] : null; };
+  let v = null;
+  if (carreira === 'SEMSA' || carreira === 'SEMED_ADMIN') v = pegar(/PADRAO\s*[:\-]?\s*(\d{1,2})\b/);
+  if (!v && carreira === 'SES') v = pegar(/(?:CLASSE|REF(?:ERENCIA)?|NIVEL)[^\n]{0,12}?\b([A-H][1-4])\b/);
+  if (!v && carreira === 'PMAM') {
+    const p = [['SUBTENENTE','Subtenente'],['1 SARGENTO|1º SARGENTO|1O SARGENTO|1 SGT','1º Sargento'],['2 SARGENTO|2º SARGENTO|2O SARGENTO|2 SGT','2º Sargento'],
+               ['3 SARGENTO|3º SARGENTO|3O SARGENTO|3 SGT','3º Sargento'],['CABO','Cabo'],['SOLDADO 1|SD 1|SOLDADO DE 1','Soldado 1ª'],['SOLDADO 2|SD 2|SOLDADO DE 2','Soldado 2ª'],
+               ['TENENTE[- ]CORONEL|TEN CEL','Tenente-Coronel'],['CORONEL','Coronel'],['MAJOR','Major'],['CAPITAO','Capitão'],['1 TENENTE|1º TENENTE|1O TENENTE','1º Tenente'],
+               ['2 TENENTE|2º TENENTE|2O TENENTE','2º Tenente'],['ASPIRANTE','Aspirante']];
+    for (const [re, nome] of p) if (new RegExp('\\b(' + re + ')\\b').test(u)) { v = nome; break; }
+  }
+  if (!v && carreira === 'PCAM') {
+    const m = /(CLASSE ESPECIAL|[1-4]\s*[ªA]?\s*CLASSE)/.exec(u);
+    if (m) v = /ESPECIAL/.test(m[1]) ? 'Classe especial' : `${m[1].match(/[1-4]/)[0]}ª classe`;
+  }
+  if (!v) v = pegar(/REF(?:ERENCIA|\.)?\s*[:\-]?\s*([A-H])1?\b/) || pegar(/CLASSE\s*\/\s*REF[^\n]{0,10}?\/\s*([A-H])\b/);
+  if (!v || !cfg) return v;
+  const lista = [...cfg.refs, ...(cfg.refsAlt || [])];
+  const achado = lista.find((r) => norm(r) === norm(v)) || lista.find((r) => norm(r) === norm(v).replace(/1$/, ''));
+  return achado || null;
+}
+function extrairDados(texto) {
+  const t = texto, u = norm(t);
+  const g = (re) => { const m = re.exec(u); return m ? m[1].trim() : ''; };
+  const carreira = detectarCarreira(t);
+  let nome = g(/\bNOME(?:\s+DO\s+SERVIDOR)?\s*[:\-]?\s*([A-Z][A-Z ]{5,60}?)(?:\s{2,}|\s+MATR|\s+CPF|\s+CARGO|\n|$)/);
+  const matricula = g(/MATRICULA\s*[:\-]?\s*([0-9][0-9.\-\/]{3,15}[0-9A-Z]?)/);
+  const cargo = g(/CARGO\s*[:\-]?\s*([A-Z][A-Z .\/-]{3,50}?)(?:\s{2,}|\n|$)/);
+  let posse = null, posseOrig = '';
+  const mp = /(DATA\s+DE\s+ADMISSAO|ADMISSAO|DATA\s+DE\s+POSSE|POSSE|INICIO\s+(?:DO\s+)?EXERCICIO|EXERCICIO)\D{0,20}(\d{2}\/\d{2}\/\d{4})/.exec(u);
+  if (mp) { posse = parseBRDate(mp[2]); posseOrig = mp[1].toLowerCase(); }
+  return { carreira, nome, matricula, cargo, posse, posseOrig, comp: extrairCompetencia(t), ref: carreira ? extrairRef(t, carreira) : null };
+}
+
+/* ── EXECUTE: motor de progressão (mesma lógica do motor estável) ─────────── */
+// Datas das progressões devidas desde a posse até `ate`.
+function datasProgressao(cfg, posse, ate) {
+  const out = []; let cursor = mes1(posse); const fim = mes1(ate);
+  if (cfg.regra === 'breakpoints') {
+    for (const bp of cfg.bps) { const d = addMonths(mes1(posse), bp); if (d > fim) break; out.push(d); }
+    return out;
+  }
+  for (let guard = 0; guard < 40; guard++) {
+    let meses = cfg.meses;
+    if (cfg.regra === 'marco2019') {
+      // Lei 4.836/2019 alcança interstício em curso: se a progressão pela regra antiga cairia após o marco, vale 36 meses.
+      const marco = new Date(...cfg.marco);
+      meses = addMonths(cursor, cfg.antigo) >= marco ? cfg.novo : cfg.antigo;
+    }
+    const prox = addMonths(cursor, meses);
+    if (prox > fim) break;
+    out.push(prox); cursor = prox;
+  }
+  return out;
+}
+function proximaProgressao(cfg, posse, depois) {
+  const todas = datasProgressao(cfg, posse, addMonths(depois, 200));
+  return todas.find((d) => d > depois) || null;
+}
+function avaliar(d) {
+  const cfg = CARREIRAS[d.carreira];
+  const hoje = mes1(new Date());
+  if (!cfg) return { tipo: 'warn', tag: 'Precisa de análise', titulo: 'Carreira não identificada', texto: 'Escolha o órgão/carreira no passo 2 para a triagem funcionar.', faltaDado: true };
+  if (!d.posse) return { tipo: 'warn', tag: 'Falta um dado', titulo: 'Informe a data de posse', texto: 'Sem a data de posse não dá para saber quantas progressões o servidor já deveria ter. Peça o termo de posse ou veja a data de admissão no contracheque.', faltaDado: true };
+  if (!d.ref) return { tipo: 'warn', tag: 'Falta um dado', titulo: `Informe a ${cfg.rotuloRef.toLowerCase()} atual`, texto: `Não consegui ler a ${cfg.rotuloRef.toLowerCase()} no contracheque. Escolha a que aparece no contracheque mais recente.`, faltaDado: true };
+  const lista = (cfg.refsAlt && cfg.refsAlt.includes(d.ref)) ? cfg.refsAlt : cfg.refs;
+  const ini = lista.includes(d.refIni) ? d.refIni : lista[0];
+  const iIni = lista.indexOf(ini), iAtual = lista.indexOf(d.ref);
+  const progs = datasProgressao(cfg, d.posse, hoje);
+  const iDevida = Math.min(iIni + progs.length, lista.length - 1);
+  const devida = lista[iDevida];
+  const atraso = iDevida - iAtual;
+  const tempo = diffMonths(mes1(d.posse), hoje);
+  const anos = `${Math.floor(tempo / 12)} ano(s)${tempo % 12 ? ` e ${tempo % 12} mês(es)` : ''}`;
+  // a partir de quando o servidor deveria estar acima da referência atual
+  const idxDesde = iAtual - iIni;                       // nº da progressão que deveria ter levado acima da atual
+  const desde = (atraso > 0 && progs[idxDesde]) ? progs[idxDesde] : null;
+  const mesesAtraso = desde ? diffMonths(desde, hoje) : 0;
+  const mesesCobraveis = Math.min(mesesAtraso, 60);
+  const base = { cfg, lista, ini, devida, atraso, progs, tempo, anos, desde, mesesAtraso, mesesCobraveis, iAtual, iDevida };
+  if (iAtual < 0) return { ...base, tipo: 'warn', tag: 'Precisa de análise', titulo: 'Referência fora da tabela', texto: 'A referência informada não pertence a esta carreira. Confira o passo 2.' };
+  if (atraso > 0) {
+    return { ...base, tipo: cfg.indicativo ? 'warn' : 'ok', tag: cfg.indicativo ? 'Indício de viabilidade' : 'Viável',
+      titulo: `Progressão atrasada: ${atraso} ${atraso > 1 ? 'níveis' : 'nível'} abaixo do devido`,
+      texto: `Com ${anos} de serviço, ${esc(d.nome || 'o servidor')} já deveria estar em <b>${esc(devida)}</b>, mas o contracheque mostra <b>${esc(d.ref)}</b>. ` +
+        `O atraso começou em <b>${fmtMes(desde)}</b>${mesesAtraso > 60 ? `; como a prescrição é de 5 anos, entram no cálculo os últimos <b>60 meses</b> de diferença` : `: são <b>${mesesCobraveis} mês(es)</b> de diferença a cobrar`}.` +
+        (cfg.indicativo ? ' <br><b>Atenção:</b> nesta carreira a promoção não é automática por tempo (há outros requisitos). Encaminhe para o advogado avaliar.' : '') };
+  }
+  const prox = proximaProgressao(cfg, d.posse, hoje);
+  if (iAtual >= lista.length - 1) return { ...base, tipo: 'bad', tag: 'Sem viabilidade', titulo: 'Já está no topo da carreira', texto: `O servidor já está na última ${cfg.rotuloRef.toLowerCase()} (${esc(d.ref)}). Não há progressão a cobrar por tempo de serviço.` };
+  return { ...base, tipo: 'bad', tag: 'Sem viabilidade agora', titulo: 'A progressão está em dia',
+    texto: `Com ${anos} de serviço, o devido é <b>${esc(devida)}</b> e o contracheque já mostra <b>${esc(d.ref)}</b>.` +
+      (prox ? ` A próxima progressão está prevista para <b>${fmtMes(prox)}</b>. Se não vier no contracheque seguinte, o cliente pode voltar.` : '') };
+}
+
+/* ── estado ───────────────────────────────────────────────────────────────── */
+const estado = { arquivos: [] };   // {id, file, status, prog, msg, texto, metodo, tipo, dados}
+let _seq = 0;
+
+/* ── UI: passo 1 ──────────────────────────────────────────────────────────── */
+const ICONES = { contracheque: '💵', posse: '📜', identidade: '🪪', residencia: '🏠', procuracao: '✍️', contrato: '📑', fichafin: '📊', hipossuf: '📄', outro: '📎' };
+function renderArquivos() {
+  const box = $('files');
+  box.innerHTML = estado.arquivos.map((a) => {
+    const opts = [...DOCS.map((d) => [d.id, d.nome]), ['outro', 'Outro documento']].map(([v, n]) => `<option value="${v}" ${a.tipo === v ? 'selected' : ''}>${esc(n)}</option>`).join('');
+    let meta = '';
+    if (a.status === 'lendo') meta = `<div class="fmeta">⏳ ${esc(a.msg || 'lendo…')}</div><div class="bar"><i style="width:${Math.round((a.prog || 0) * 100)}%"></i></div>`;
+    else if (a.status === 'erro') meta = `<div class="fmeta" style="color:var(--bad)">⚠️ ${esc(a.msg)}. Classifique à mão ao lado.</div>`;
+    else {
+      const dd = a.dados || {};
+      const info = a.tipo === 'contracheque'
+        ? [dd.comp ? `${MESES_LONGOS[dd.comp.m]}/${dd.comp.a}` : 'mês não lido', dd.ref ? `ref. ${dd.ref}` : null, dd.carreira ? CARREIRAS[dd.carreira].nome.split(':')[0] : null].filter(Boolean).join(' · ')
+        : '';
+      meta = `<div class="fmeta">✅ ${esc(a.metodo)}${info ? ' · ' + esc(info) : ''}</div>`;
+    }
+    return `<div class="file"><div class="ficon">${ICONES[a.tipo] || '📎'}</div>
+      <div><div class="fname">${esc(a.file.name)}</div>${meta}</div>
+      <div class="fright"><select data-id="${a.id}" class="tipoSel" aria-label="Tipo de documento" ${a.status === 'lendo' ? 'disabled' : ''}>${opts}</select>
+      <button class="x" data-del="${a.id}" title="Remover">✕</button></div></div>`;
+  }).join('');
+  const lendo = estado.arquivos.filter((a) => a.status === 'lendo').length;
+  const cc = estado.arquivos.filter((a) => a.tipo === 'contracheque').length;
+  $('readState').textContent = !estado.arquivos.length ? 'Nenhum arquivo ainda. Sem contracheque, dá para preencher os dados à mão no passo 2.'
+    : lendo ? `Lendo ${lendo} arquivo(s)… (fotos e escaneados levam alguns segundos)` : `${estado.arquivos.length} arquivo(s) lido(s) · ${cc} contracheque(s).`;
+  $('go2').disabled = lendo > 0;
+}
+async function adicionar(files) {
+  for (const file of files) {
+    if (!(/\.(pdf|jpe?g|png|webp|heic)$/i.test(file.name) || /^(application\/pdf|image\/)/i.test(file.type))) { toast(`Formato não aceito: ${file.name}`); continue; }
+    const a = { id: ++_seq, file, status: 'lendo', prog: 0, tipo: 'outro' };
+    estado.arquivos.push(a);
+  }
+  renderArquivos();
+  for (const a of estado.arquivos.filter((x) => x.status === 'lendo' && !x._iniciado)) {
+    a._iniciado = true;
+    try {
+      const r = await lerArquivo(a.file, (p, msg) => { a.prog = p; a.msg = msg; renderArquivos(); });
+      a.texto = r.texto; a.metodo = r.metodo; a.tipo = classificar(r.texto);
+      if (a.tipo === 'contracheque' || /contra.?cheque/i.test(a.file.name)) { a.tipo = 'contracheque'; a.dados = extrairDados(r.texto); }
+      a.status = 'ok';
+    } catch (e) {
+      console.error(e); a.status = 'erro'; a.msg = 'Não consegui ler o arquivo (' + (e.message || e) + ')';
+      if (/contra.?cheque/i.test(a.file.name)) a.tipo = 'contracheque';
+    }
+    renderArquivos();
+  }
+}
+$('drop').onclick = () => $('inp').click();
+$('drop').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('inp').click(); } };
+$('inp').onchange = (e) => { adicionar([...e.target.files]); e.target.value = ''; };
+['dragenter', 'dragover'].forEach((ev) => $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.remove('over'); }));
+$('drop').addEventListener('drop', (e) => adicionar([...e.dataTransfer.files]));
+$('files').addEventListener('change', (e) => {
+  if (!e.target.classList.contains('tipoSel')) return;
+  const a = estado.arquivos.find((x) => x.id === +e.target.dataset.id); a.tipo = e.target.value;
+  if (a.tipo === 'contracheque' && !a.dados && a.texto) a.dados = extrairDados(a.texto);
+  renderArquivos();
+});
+$('files').addEventListener('click', (e) => {
+  const id = e.target.dataset.del; if (!id) return;
+  estado.arquivos = estado.arquivos.filter((x) => x.id !== +id); renderArquivos();
+});
+
+/* ── UI: passo 2 ──────────────────────────────────────────────────────────── */
+function irPara(n) {
+  ['p1', 'p2', 'p3'].forEach((p, i) => $(p).classList.toggle('hide', i !== n - 1));
+  ['s1', 's2', 's3'].forEach((s, i) => { $(s).classList.toggle('on', i === n - 1); $(s).classList.toggle('done', i < n - 1); });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function consolidar() {
+  const cc = estado.arquivos.filter((a) => a.tipo === 'contracheque' && a.dados);
+  cc.sort((a, b) => ((b.dados.comp?.a || 0) * 12 + (b.dados.comp?.m || 0)) - ((a.dados.comp?.a || 0) * 12 + (a.dados.comp?.m || 0)));
+  const r = { carreira: '', nome: '', posse: null, ref: null, comp: null, fonte: {} };
+  for (const a of cc) {
+    const d = a.dados;
+    if (!r.carreira && d.carreira) { r.carreira = d.carreira; r.fonte.carreira = a.file.name; }
+    if (!r.nome && d.nome) { r.nome = d.nome; r.fonte.nome = a.file.name; }
+    if (!r.posse && d.posse) { r.posse = d.posse; r.fonte.posse = `${a.file.name} (${d.posseOrig})`; }
+    if (!r.ref && d.ref) { r.ref = d.ref; r.fonte.ref = a.file.name; }
+    if (!r.comp && d.comp) { r.comp = d.comp; r.fonte.comp = a.file.name; }
+  }
+  // ref de outra carreira lida antes da carreira final: re-extrai
+  if (r.carreira && !r.ref) for (const a of cc) { const v = extrairRef(a.texto, r.carreira); if (v) { r.ref = v; r.fonte.ref = a.file.name; break; } }
+  r.refsDistintas = [...new Set(cc.map((a) => a.dados.ref).filter(Boolean))];
+  r.nContracheques = cc.length;
+  return r;
+}
+function preencherRefs(carreira, sel) {
+  const cfg = CARREIRAS[carreira];
+  $('lblRef').textContent = cfg ? `${cfg.rotuloRef} atual no contracheque` : 'Referência atual no contracheque';
+  const lista = cfg ? [...cfg.refs, ...(cfg.refsAlt || [])] : [];
+  $('fRef').innerHTML = '<option value="">escolha…</option>' + lista.map((r) => `<option ${r === sel ? 'selected' : ''}>${esc(r)}</option>`).join('');
+  $('fRefIni').innerHTML = lista.map((r, i) => `<option ${i === 0 ? 'selected' : ''}>${esc(r)}</option>`).join('');
+}
+function marcarFonte(id, fonte) {
+  const el = $(id); el.className = 'src' + (fonte ? '' : ' manual');
+  el.textContent = fonte ? `✓ lido de ${fonte}` : 'preencha à mão';
+}
+$('fCarreira').innerHTML = '<option value="">escolha…</option>' + Object.entries(CARREIRAS).map(([k, c]) => `<option value="${k}">${esc(c.nome)}</option>`).join('');
+$('fCarreira').onchange = () => { preencherRefs($('fCarreira').value, ''); syncRefIni(); };
+$('fRef').onchange = syncRefIni;
+// SES e PMAM têm duas trilhas: a referência de ingresso acompanha a trilha da atual.
+function syncRefIni() {
+  const cfg = CARREIRAS[$('fCarreira').value]; if (!cfg || !cfg.refsAlt) return;
+  const alt = cfg.refsAlt.includes($('fRef').value);
+  $('fRefIni').value = alt ? cfg.refsAlt[0] : cfg.refs[0];
+}
+$('go2').onclick = () => {
+  const c = consolidar();
+  $('fNome').value = c.nome || ''; marcarFonte('srcNome', c.fonte.nome);
+  $('fCarreira').value = c.carreira || ''; marcarFonte('srcCarreira', c.fonte.carreira);
+  preencherRefs(c.carreira, c.ref); marcarFonte('srcRef', c.fonte.ref); syncRefIni();
+  if (c.refsDistintas.length > 1) { $('srcRef').className = 'src manual'; $('srcRef').textContent = `⚠️ os contracheques mostram referências diferentes (${c.refsDistintas.join(', ')}): confira a do mais recente`; }
+  $('fPosse').value = c.posse ? `${c.posse.getFullYear()}-${String(c.posse.getMonth() + 1).padStart(2, '0')}-${String(c.posse.getDate()).padStart(2, '0')}` : '';
+  marcarFonte('srcPosse', c.fonte.posse);
+  $('fComp').value = c.comp ? `${String(c.comp.m + 1).padStart(2, '0')}/${c.comp.a}` : ''; marcarFonte('srcComp', c.fonte.comp);
+  irPara(2);
+};
+$('back1').onclick = () => irPara(1);
+
+/* ── UI: passo 3 (WRITEBACK) ──────────────────────────────────────────────── */
+let _ultimo = null;
+function lerForm() {
+  const p = $('fPosse').value.split('-');
+  return { nome: $('fNome').value.trim(), carreira: $('fCarreira').value, ref: $('fRef').value, refIni: $('fRefIni').value,
+           posse: p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : null, comp: $('fComp').value.trim() };
+}
+function statusDocs() {
+  return DOCS.map((d) => {
+    const n = estado.arquivos.filter((a) => a.tipo === d.id).length;
+    let ok = d.min ? n >= d.min : n > 0;
+    let obs = d.min && n > 0 && n < d.min ? `recebido(s) ${n} de ${d.min}` : (n ? `${n} arquivo(s)` : '');
+    if (d.id === 'posse' && !n && $('fPosse').value && /lido de/.test($('srcPosse').textContent)) obs = 'data lida do contracheque: ainda vale pedir o comprovante';
+    if (d.id === 'contracheque' && n) {   // "últimos" = recentes: o mais novo não pode ter mais de 3 meses
+      const comps = estado.arquivos.filter((a) => a.tipo === d.id && a.dados && a.dados.comp).map((a) => new Date(a.dados.comp.a, a.dados.comp.m, 1));
+      const novo = comps.length ? new Date(Math.max(...comps)) : null;
+      if (novo && diffMonths(novo, mes1(new Date())) > 3) { ok = false; obs = `o mais recente é de ${fmtMes(novo)}: peça os 3 últimos meses`; }
+    }
+    return { ...d, n, ok, obs };
+  });
+}
+function renderResultado() {
+  const d = lerForm(); const r = avaliar(d); _ultimo = { d, r };
+  $('verdict').className = 'verdict ' + r.tipo;
+  $('verdict').innerHTML = `<span class="vtag">${esc(r.tag)}</span><div class="vtit">${esc(r.titulo)}</div><div class="vtxt">${r.texto}</div>` +
+    (r.cfg && !r.faltaDado ? `<div class="kpis">
+      <div class="kpi"><span>Tempo de serviço</span><b>${esc(r.anos)}</b></div>
+      <div class="kpi"><span>No contracheque</span><b>${esc(d.ref)}</b></div>
+      <div class="kpi"><span>Deveria estar em</span><b>${esc(r.devida)}</b></div>
+      <div class="kpi"><span>Meses de diferença a cobrar</span><b>${r.atraso > 0 ? r.mesesCobraveis : '–'}</b></div></div>` : '');
+  // linha do tempo
+  if (r.cfg && !r.faltaDado) {
+    const itens = [`<div>Posse: <b>${fmtData(d.posse)}</b> em <b>${esc(r.ini)}</b></div>`];
+    r.progs.slice(0, 12).forEach((p, i) => {
+      const ref = r.lista[Math.min(r.lista.indexOf(r.ini) + i + 1, r.lista.length - 1)];
+      const late = r.lista.indexOf(ref) > r.iAtual;
+      itens.push(`<div class="${late ? 'late' : ''}">${fmtMes(p)}: deveria passar para <b>${esc(ref)}</b> ${late ? '<span class="pill b">não aconteceu</span>' : '<span class="pill">ok</span>'}</div>`);
+    });
+    if (r.progs.length > 12) itens.push(`<div><small>… e mais ${r.progs.length - 12} progressões</small></div>`);
+    const prox = proximaProgressao(r.cfg, d.posse, mes1(new Date()));
+    if (prox && r.iDevida < r.lista.length - 1) itens.push(`<div class="fut">${fmtMes(prox)}: próxima progressão prevista <span class="pill w">futura</span></div>`);
+    $('timeline').innerHTML = itens.join('');
+    $('explica').innerHTML = `Regra aplicada para <b>${esc(r.cfg.nome)}</b>: ${r.cfg.regra === 'marco2019' ? `progressão a cada ${r.cfg.antigo} meses até 2019 e a cada ${r.cfg.novo} meses depois do marco de 01/03/2019` : r.cfg.regra === 'breakpoints' ? 'primeira progressão aos 36 meses de exercício e depois a cada 24 meses' : `progressão a cada ${r.cfg.meses} meses`}, contada da data de posse.`;
+    $('fund').innerHTML = `Fundamento: ${esc(r.cfg._meta.lei)}. Prescrição quinquenal: Decreto n.º 20.910/1932. Triagem preliminar: o valor exato sai da calculadora completa.`;
+    $('cardTl').classList.remove('hide');
+  } else $('cardTl').classList.add('hide');
+  // checklist
+  const st = statusDocs(); const falta = st.filter((x) => x.obrig && !x.ok);
+  $('docResumo').innerHTML = falta.length ? `Faltam <b>${falta.length}</b> documento(s) obrigatório(s).` : '✅ Todos os documentos obrigatórios foram recebidos.';
+  $('checklist').innerHTML = st.map((x) => `<div class="ck ${x.ok ? 'have' : 'miss'}"><div class="st">${x.ok ? '✅' : (x.obrig ? '❌' : '➖')}</div>
+    <div><div class="t">${esc(x.nome)}</div><div class="d">${esc(x.obs || x.desc)}</div></div>
+    <div class="${x.obrig ? 'must' : 'opt'}">${x.ok ? '' : (x.obrig ? 'falta' : 'opcional')}</div></div>`).join('');
+  const lidos = estado.arquivos.filter((a) => a.texto).map((a) => `##### ${a.file.name} (${a.tipo})\n${a.texto.slice(0, 3000)}`).join('\n\n');
+  $('raw').textContent = lidos || '(nenhum documento lido)';
+  irPara(3);
+}
+function textoCliente() {
+  const { d, r } = _ultimo; const falta = statusDocs().filter((x) => x.obrig && !x.ok);
+  const nome = (d.nome || '').split(' ')[0];
+  const ini = nome ? `Olá, ${nome[0] + nome.slice(1).toLowerCase()}! ` : 'Olá! ';
+  if (r.tipo === 'bad' && !r.faltaDado) return `${ini}Analisamos seus contracheques: pela regra da sua carreira, a sua progressão está em dia hoje.${r.texto.includes('próxima progressão') ? ' Se ela não aparecer no próximo contracheque depois da data prevista, fale com a gente.' : ''}\n\nLAADV · Luís Albert Advocacia`;
+  if (!falta.length) return `${ini}Recebemos todos os documentos necessários. Agora vamos fazer o cálculo e seguir com a sua ação.\n\nLAADV · Luís Albert Advocacia`;
+  return `${ini}Analisamos seus documentos e ${r.tipo === 'ok' ? 'identificamos que há progressão atrasada no seu cargo' : 'precisamos completar a análise'}. Para fecharmos a ação, ainda precisamos de:\n\n` +
+    falta.map((x, i) => `${i + 1}. ${x.nome}${x.obs ? ` (${x.obs})` : ''}: ${x.desc}`).join('\n') +
+    `\n\nPode mandar por aqui mesmo, em foto ou PDF. Obrigado!\nLAADV · Luís Albert Advocacia`;
+}
+function textoInterno() {
+  const { d, r } = _ultimo; const st = statusDocs();
+  return [`TRIAGEM LAADV · ${new Date().toLocaleString('pt-BR')}`, `Cliente: ${d.nome || '-'}`, `Carreira: ${r.cfg ? r.cfg.nome : '-'}`,
+    `Posse: ${d.posse ? fmtData(d.posse) : '-'} · Ref. atual: ${d.ref || '-'} · Ref. devida: ${r.devida || '-'}`,
+    `Veredito: ${r.tag}: ${r.titulo}`, r.desde ? `Atraso desde ${fmtMes(r.desde)} · meses a cobrar (prescrição 5 anos): ${r.mesesCobraveis}` : '',
+    `Documentos: ` + st.map((x) => `${x.ok ? '[OK]' : (x.obrig ? '[FALTA]' : '[opc]')} ${x.nome}`).join(' | '),
+    r.cfg ? `Fundamento: ${r.cfg._meta.lei}` : ''].filter(Boolean).join('\n');
+}
+async function copiar(txt, msg) {
+  try { await navigator.clipboard.writeText(txt); toast(msg); }
+  catch { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast(msg); }
+}
+$('go3').onclick = renderResultado;
+$('back2').onclick = () => irPara(2);
+$('btnZap').onclick = () => copiar(textoCliente(), 'Mensagem copiada: cole no WhatsApp do cliente');
+$('btnResumo').onclick = () => copiar(textoInterno(), 'Resumo copiado');
+$('btnPrint').onclick = () => window.print();
+$('novo').onclick = () => { estado.arquivos = []; renderArquivos(); ['fNome', 'fPosse', 'fComp'].forEach((i) => ($(i).value = '')); irPara(1); };
+renderArquivos();
+
+// Exposto para testes automatizados (não usado pela interface).
+window.__laadv = { extrairDados, classificar, avaliar, datasProgressao, CARREIRAS, estado };
+console.log('%cLAADV Triagem ' + window._VERSION_LOG.at(-1).v, 'color:#0B4A44;font-weight:bold', '· _VERSION_LOG / _VICIOS_CONHECIDOS / _TENTATIVAS_FALHAS no window');
+</script>
+</body>
+</html>
